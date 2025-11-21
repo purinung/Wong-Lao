@@ -4,6 +4,10 @@ import { GameState, Player, CardType, GameContent, GameMode } from './types';
 import PlayerSetup from './components/PlayerSetup';
 import Card from './components/Card';
 import SpinBottle from './components/SpinBottle';
+import RussianRoulette from './components/RussianRoulette';
+import KingsCup from './components/KingsCup';
+import TimeBomb from './components/TimeBomb';
+import DiceGame from './components/DiceGame';
 import { TRUTH_SOFT, TRUTH_HARD, DARE_SOFT, DARE_HARD } from './data/gameContent';
 import { shuffleArray, processContent } from './utils/gameUtils';
 
@@ -29,6 +33,10 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentContent, setCurrentContent] = useState<GameContent | null>(null);
   const [showSpinBottle, setShowSpinBottle] = useState(false);
+  const [showRoulette, setShowRoulette] = useState(false);
+  const [showKingsCup, setShowKingsCup] = useState(false);
+  const [showTimeBomb, setShowTimeBomb] = useState(false);
+  const [showDiceGame, setShowDiceGame] = useState(false);
 
   // State to hold the active shuffled decks
   const [decks, setDecks] = useState<GameDecks>({
@@ -147,6 +155,10 @@ const App: React.FC = () => {
     setIsFlipped(false);
     setCurrentPlayerIndex(0);
     setShowSpinBottle(false);
+    setShowRoulette(false);
+    setShowKingsCup(false);
+    setShowTimeBomb(false);
+    setShowDiceGame(false);
   };
 
   return (
@@ -174,11 +186,45 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* Russian Roulette Overlay */}
+      {showRoulette && (
+        <RussianRoulette 
+          onClose={() => setShowRoulette(false)}
+        />
+      )}
+
+      {/* King's Cup Overlay */}
+      {showKingsCup && (
+        <KingsCup 
+          onClose={() => setShowKingsCup(false)}
+        />
+      )}
+
+       {/* Time Bomb Overlay */}
+       {showTimeBomb && (
+        <TimeBomb 
+          onClose={() => setShowTimeBomb(false)}
+        />
+      )}
+
+      {/* Dice Game Overlay */}
+      {showDiceGame && (
+        <DiceGame 
+          onClose={() => setShowDiceGame(false)}
+        />
+      )}
+
       <div className="relative z-10 container mx-auto px-4 py-8 min-h-[100dvh] flex flex-col">
         
         {gameState === GameState.SETUP && (
           <div className="flex-1 flex items-center justify-center">
-            <PlayerSetup onStartGame={handleStartGame} />
+            <PlayerSetup 
+              onStartGame={handleStartGame} 
+              onStartRoulette={() => setShowRoulette(true)}
+              onStartKingsCup={() => setShowKingsCup(true)}
+              onStartTimeBomb={() => setShowTimeBomb(true)}
+              onStartDiceGame={() => setShowDiceGame(true)}
+            />
           </div>
         )}
 
@@ -202,6 +248,38 @@ const App: React.FC = () => {
                  >
                     🍾
                  </button>
+                 {/* Russian Roulette Trigger */}
+                 <button 
+                    onClick={() => setShowRoulette(true)}
+                    className="text-xl bg-gray-800 border border-red-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(239,68,68,0.2)]"
+                    title="Russian Roulette"
+                 >
+                    🔫
+                 </button>
+                 {/* King's Cup Trigger */}
+                 <button 
+                    onClick={() => setShowKingsCup(true)}
+                    className="text-xl bg-gray-800 border border-yellow-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(234,179,8,0.2)]"
+                    title="King's Cup"
+                 >
+                    👑
+                 </button>
+                 {/* Time Bomb Trigger */}
+                 <button 
+                    onClick={() => setShowTimeBomb(true)}
+                    className="text-xl bg-gray-800 border border-orange-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(234,88,12,0.2)]"
+                    title="Time Bomb"
+                 >
+                    💣
+                 </button>
+                 {/* Dice Game Trigger */}
+                 <button 
+                    onClick={() => setShowDiceGame(true)}
+                    className="text-xl bg-gray-800 border border-blue-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(59,130,246,0.2)]"
+                    title="Dice"
+                 >
+                    🎲
+                 </button>
                </div>
 
                <div className="text-center flex-1 absolute left-0 right-0 pointer-events-none">
@@ -221,7 +299,7 @@ const App: React.FC = () => {
                </div>
                
                {/* Spacer to balance layout */}
-               <div className="w-[80px]"></div>
+               <div className="w-[40px]"></div>
             </div>
 
             {/* The Card Area - Centered vertically in available space */}

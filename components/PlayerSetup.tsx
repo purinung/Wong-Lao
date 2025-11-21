@@ -1,11 +1,77 @@
+
 import React, { useState } from 'react';
 import { Player, GameMode } from '../types';
 
 interface PlayerSetupProps {
   onStartGame: (players: Player[], mode: GameMode) => void;
+  onStartRoulette: () => void;
+  onStartKingsCup: () => void;
+  onStartTimeBomb: () => void;
+  onStartDiceGame: () => void;
 }
 
-const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
+const AppLogo = () => (
+  <div className="flex flex-col items-center justify-center mb-8 select-none">
+    <div className="relative w-40 h-40 mb-2">
+      <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl animate-fade-in">
+        {/* Outer Circle Ring - Navy Blue & Orange */}
+        <circle cx="100" cy="100" r="90" fill="none" stroke="#1e3a8a" strokeWidth="6" className="opacity-80" />
+        
+        {/* Decorative Arcs */}
+        <path d="M 100 10 A 90 90 0 0 1 190 100" fill="none" stroke="#f97316" strokeWidth="6" strokeLinecap="round" />
+        <path d="M 10 100 A 90 90 0 0 1 100 190" fill="none" stroke="#f97316" strokeWidth="6" strokeLinecap="round" transform="rotate(180 100 100)" />
+
+        {/* Icons Group - Combined all game modes */}
+        <g transform="translate(100, 100)">
+           
+           {/* Crown (King's Cup) - Top Center */}
+           <g transform="translate(0, -45)">
+              <path d="M -20 -10 L -10 10 L 0 -20 L 10 10 L 20 -10 L 20 20 L -20 20 Z" fill="#fbbf24" stroke="#b45309" strokeWidth="2" />
+              <circle cx="0" cy="-20" r="3" fill="#fbbf24" />
+              <circle cx="-20" cy="-10" r="2" fill="#fbbf24" />
+              <circle cx="20" cy="-10" r="2" fill="#fbbf24" />
+           </g>
+
+           {/* Gun (Russian Roulette) - Right */}
+           <g transform="translate(45, -10) rotate(10)">
+              <path d="M -15 -5 L 25 -5 L 25 5 L -5 5 L -5 18 L -20 18 L -20 5 Z" fill="#9ca3af" stroke="#374151" strokeWidth="2" />
+              <circle cx="-10" cy="2" r="6" fill="#4b5563" />
+           </g>
+
+           {/* Bomb (Time Bomb) - Bottom Right */}
+           <g transform="translate(30, 40)">
+              <circle cx="0" cy="5" r="14" fill="#1f2937" stroke="#ef4444" strokeWidth="1.5"/>
+              <path d="M 0 -9 Q 5 -20 12 -15" fill="none" stroke="#f97316" strokeWidth="2" />
+              <path d="M 12 -15 L 16 -19 M 10 -19 L 14 -15" stroke="#ef4444" strokeWidth="2" />
+           </g>
+
+           {/* Dice (Chance) - Bottom Left */}
+           <g transform="translate(-30, 40)">
+              <rect x="-12" y="-12" width="24" height="24" rx="4" fill="#3b82f6" stroke="#1e3a8a" strokeWidth="2" transform="rotate(-15)" />
+              <circle cx="-4" cy="-4" r="2.5" fill="white" transform="rotate(-15)"/>
+              <circle cx="4" cy="4" r="2.5" fill="white" transform="rotate(-15)"/>
+              <circle cx="4" cy="-4" r="2.5" fill="white" transform="rotate(-15)"/>
+              <circle cx="-4" cy="4" r="2.5" fill="white" transform="rotate(-15)"/>
+           </g>
+
+           {/* Cards (General) - Left */}
+           <g transform="translate(-45, -10) rotate(-15)">
+              <rect x="-12" y="-16" width="24" height="32" rx="3" fill="white" stroke="#f97316" strokeWidth="2" transform="rotate(-10)" />
+              <text x="-8" y="5" fontSize="14" fill="#f97316" fontWeight="bold" transform="rotate(-10)">A</text>
+              <rect x="0" y="-16" width="24" height="32" rx="3" fill="white" stroke="#1e3a8a" strokeWidth="2" transform="rotate(10)" />
+              <text x="4" y="5" fontSize="14" fill="#1e3a8a" fontWeight="bold" transform="rotate(10)">K</text>
+           </g>
+        </g>
+      </svg>
+    </div>
+    
+    <h1 className="text-5xl font-black text-white tracking-tighter leading-none drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">
+      <span className="text-blue-500">Wong</span> <span className="text-orange-500">Lao</span>
+    </h1>
+  </div>
+);
+
+const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame, onStartRoulette, onStartKingsCup, onStartTimeBomb, onStartDiceGame }) => {
   const [names, setNames] = useState<string[]>([]);
   const [currentInput, setCurrentInput] = useState('');
   const [selectedMode, setSelectedMode] = useState<GameMode>('HARD');
@@ -27,7 +93,7 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
     setNames(names.filter((_, i) => i !== index));
   };
 
-  const handleStart = () => {
+  const handleStartGame = () => {
     if (names.length > 0) {
       const players: Player[] = names.map((name, index) => ({
         id: `player-${index}-${Date.now()}`,
@@ -38,13 +104,9 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-gray-900/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
-      <div className="text-center mb-6">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500 mb-2">
-          Wong Lao
-        </h1>
-        <p className="text-gray-400 text-sm">Truth or Dare AI Edition</p>
-      </div>
+    <div className="w-full max-w-md mx-auto p-6 bg-gray-900/90 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl h-full overflow-y-auto custom-scrollbar flex flex-col">
+      
+      <AppLogo />
 
       {/* Mode Selection */}
       <div className="mb-6 space-y-2">
@@ -100,7 +162,7 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
           </button>
         </div>
 
-        <div className="max-h-48 overflow-y-auto space-y-2 custom-scrollbar">
+        <div className="max-h-40 overflow-y-auto space-y-2 custom-scrollbar">
           {names.length === 0 && (
             <p className="text-center text-gray-600 py-4 italic">ยังไม่มีใครเข้าวง...</p>
           )}
@@ -120,7 +182,7 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
         </div>
 
         <button
-          onClick={handleStart}
+          onClick={handleStartGame}
           disabled={names.length < 1}
           className={`w-full mt-6 font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95 ${
             selectedMode === 'SOFT' 
@@ -131,6 +193,69 @@ const PlayerSetup: React.FC<PlayerSetupProps> = ({ onStartGame }) => {
           START PARTY {selectedMode === 'SOFT' ? '🐣' : '🔥'}
         </button>
       </div>
+
+      {/* Extra Modes Section */}
+      <div className="mt-8 pt-6 border-t border-gray-700/50">
+        <div className="flex items-center justify-between mb-4">
+           <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Extra Modes</span>
+           <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-1 rounded">Quick Play</span>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-2">
+            {/* Russian Roulette */}
+            <button
+                onClick={onStartRoulette}
+                className="group relative overflow-hidden rounded-xl p-1 bg-gradient-to-br from-gray-700 to-gray-800 hover:from-red-900 hover:to-gray-900 transition-all duration-300 active:scale-95 shadow-lg"
+            >
+                <div className="relative bg-gray-900/90 rounded-[10px] p-1 flex flex-col items-center justify-center h-16">
+                     <div className="text-xl mb-1 group-hover:scale-110 transition-transform">🔫</div>
+                     <div className="text-white font-bold text-[9px]">Roulette</div>
+                </div>
+            </button>
+
+             {/* King's Cup */}
+             <button
+                onClick={onStartKingsCup}
+                className="group relative overflow-hidden rounded-xl p-1 bg-gradient-to-br from-gray-700 to-gray-800 hover:from-yellow-900 hover:to-gray-900 transition-all duration-300 active:scale-95 shadow-lg"
+            >
+                <div className="relative bg-gray-900/90 rounded-[10px] p-1 flex flex-col items-center justify-center h-16">
+                     <div className="text-xl mb-1 group-hover:scale-110 transition-transform">👑</div>
+                     <div className="text-white font-bold text-[9px]">King's Cup</div>
+                </div>
+            </button>
+
+            {/* Time Bomb */}
+            <button
+                onClick={onStartTimeBomb}
+                className="group relative overflow-hidden rounded-xl p-1 bg-gradient-to-br from-gray-700 to-gray-800 hover:from-orange-900 hover:to-gray-900 transition-all duration-300 active:scale-95 shadow-lg"
+            >
+                <div className="relative bg-gray-900/90 rounded-[10px] p-1 flex flex-col items-center justify-center h-16">
+                     <div className="text-xl mb-1 group-hover:scale-110 transition-transform">💣</div>
+                     <div className="text-white font-bold text-[9px]">Bomb</div>
+                </div>
+            </button>
+
+            {/* Dice Game (Replaced Vote) */}
+            <button
+                onClick={onStartDiceGame}
+                className="group relative overflow-hidden rounded-xl p-1 bg-gradient-to-br from-gray-700 to-gray-800 hover:from-blue-900 hover:to-gray-900 transition-all duration-300 active:scale-95 shadow-lg"
+            >
+                <div className="relative bg-gray-900/90 rounded-[10px] p-1 flex flex-col items-center justify-center h-16">
+                     <div className="text-xl mb-1 group-hover:scale-110 transition-transform">🎲</div>
+                     <div className="text-white font-bold text-[9px]">Dice</div>
+                </div>
+            </button>
+        </div>
+      </div>
+
+      {/* Credits Section */}
+      <div className="mt-auto pt-8 pb-2 text-center">
+        <p className="text-gray-600 text-[10px] uppercase tracking-widest">Created By</p>
+        <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 font-bold text-sm mt-1 animate-pulse">
+          ✨ อุงอุงวายร้ายปทุม ✨
+        </p>
+      </div>
+
     </div>
   );
 };
