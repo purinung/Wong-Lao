@@ -2,15 +2,60 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Wong Lao: Truth or Dare</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
       body {
         font-family: 'Kanit', sans-serif;
+        background-color: #050505; /* Deep black */
+        color: #e5e5e5;
+        overflow-x: hidden;
+      }
+
+      /* Noise Texture overlay for premium film-grain look */
+      .bg-noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Custom Scrollbar for Webkit */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      /* Floating Animation for background orbs */
+      @keyframes float {
+        0% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0px, 0px) scale(1); }
+      }
+      .animate-float {
+        animation: float 15s ease-in-out infinite;
+      }
+      .animate-float-delayed {
+        animation: float 20s ease-in-out infinite reverse;
       }
     </style>
     <script>
@@ -18,13 +63,18 @@
           theme: {
             extend: {
               animation: {
-                'fade-in': 'fadeIn 0.5s ease-out',
-                'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'fade-in': 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'reveal-impact': 'revealImpact 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
               },
               keyframes: {
                 fadeIn: {
-                  '0%': { opacity: '0', transform: 'translateY(10px)' },
+                  '0%': { opacity: '0', transform: 'translateY(20px)' },
                   '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                revealImpact: {
+                  '0%': { transform: 'rotateY(180deg) scale(0.8)', opacity: '0' },
+                  '100%': { transform: 'rotateY(180deg) scale(1)', opacity: '1' }
                 }
               }
             }
@@ -44,5 +94,6 @@
 </head>
   <body>
     <div id="root"></div>
+    <div class="bg-noise"></div>
   </body>
 </html>

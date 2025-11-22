@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 interface KingsCupProps {
@@ -78,7 +77,7 @@ const KingsCup: React.FC<KingsCupProps> = ({ onClose }) => {
         const newCount = kingsCount + 1;
         setKingsCount(newCount);
       }
-    }, 300);
+    }, 400); // Timing matched with CSS transition
   };
 
   const getSuitSymbol = (suit: CardSuit) => {
@@ -91,7 +90,7 @@ const KingsCup: React.FC<KingsCupProps> = ({ onClose }) => {
   };
 
   const getCardColor = (suit: CardSuit) => {
-    return (suit === 'hearts' || suit === 'diamonds') ? 'text-red-500' : 'text-black';
+    return (suit === 'hearts' || suit === 'diamonds') ? 'text-red-600' : 'text-slate-900';
   };
 
   return (
@@ -99,103 +98,112 @@ const KingsCup: React.FC<KingsCupProps> = ({ onClose }) => {
       <div className="relative w-full max-w-md p-6 flex flex-col items-center h-[90dvh] justify-between">
         
         {/* Header */}
-        <div className="text-center w-full flex justify-between items-start">
-          <div>
-             <h2 className="text-3xl font-bold text-yellow-400 uppercase tracking-widest drop-shadow-lg">
-               King's Cup
-             </h2>
-             <p className="text-gray-400 text-xs">ไพ่เหลือ {deck.length} ใบ</p>
-          </div>
-          <div className="bg-yellow-900/30 border border-yellow-600/50 px-3 py-1 rounded-lg flex flex-col items-center">
-             <span className="text-xs text-yellow-200">KINGS COUNT</span>
-             <div className="flex space-x-1 mt-1">
-                {[1, 2, 3, 4].map(i => (
-                   <span key={i} className={`text-sm ${i <= kingsCount ? 'text-yellow-400' : 'text-gray-700'}`}>♛</span>
-                ))}
-             </div>
-          </div>
+        <div className="text-center w-full mb-4 z-10">
+           <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-yellow-600 uppercase tracking-widest drop-shadow-sm">
+             King's Cup
+           </h2>
+           <p className="text-gray-400 text-xs mt-1 font-mono">CARDS REMAINING: <span className="text-white font-bold">{deck.length}</span></p>
         </div>
 
         {/* Main Card Display */}
-        <div className="relative w-64 h-96 perspective-1000 cursor-pointer group" onClick={drawCard}>
-          <div className={`relative w-full h-full duration-500 preserve-3d transition-transform ${drawnCard && !isFlipping ? 'rotate-y-0' : ''} ${!drawnCard ? 'rotate-y-180' : ''}`}>
+        <div className="relative w-64 h-96 perspective-1000 cursor-pointer group z-0" onClick={drawCard}>
+          
+          {/* Stack Simulation (Cards behind) */}
+          {deck.length > 2 && (
+             <div className="absolute top-0 left-0 w-full h-full rounded-2xl border border-white/10 bg-blue-900 transform rotate-3 translate-x-2 translate-y-2 -z-10 shadow-xl"></div>
+          )}
+          {deck.length > 5 && (
+             <div className="absolute top-0 left-0 w-full h-full rounded-2xl border border-white/10 bg-blue-950 transform -rotate-2 translate-x-[-4px] translate-y-4 -z-20 shadow-xl"></div>
+          )}
+
+          <div className={`relative w-full h-full duration-700 preserve-3d transition-all ease-[cubic-bezier(0.68,-0.55,0.265,1.55)] ${drawnCard && !isFlipping ? 'rotate-y-0 translate-y-0 scale-100' : 'rotate-y-180'} ${isFlipping ? 'scale-110 -translate-y-4' : ''}`}>
              
              {/* Card Back (Deck) */}
              {deck.length > 0 && (
-               <div className={`absolute top-0 left-0 w-full h-full backface-hidden rounded-2xl border-4 border-white bg-blue-900 shadow-2xl flex items-center justify-center ${isFlipping ? 'animate-pulse' : ''}`}
+               <div className={`absolute top-0 left-0 w-full h-full backface-hidden rounded-2xl border-[6px] border-white bg-[#0f172a] shadow-2xl flex items-center justify-center overflow-hidden`}
                     style={{ transform: 'rotateY(180deg)' }}>
-                   <div className="w-full h-full bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-50 absolute"></div>
-                   <span className="text-6xl relative z-10">👑</span>
+                   {/* Detailed Pattern */}
+                   <div className="absolute inset-0 opacity-20" 
+                        style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
+                   <div className="absolute inset-2 border border-white/20 rounded-xl"></div>
+                   <span className="text-7xl relative z-10 filter drop-shadow-lg animate-pulse">👑</span>
                </div>
              )}
 
              {/* Card Front (Active Card) */}
              {drawnCard && (
-               <div className="absolute top-0 left-0 w-full h-full backface-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(234,179,8,0.4)] flex flex-col justify-between p-4 select-none">
-                  {/* Top Corner */}
-                  <div className={`text-left text-4xl font-bold leading-none ${getCardColor(drawnCard.suit)}`}>
-                    <div>{drawnCard.rank}</div>
-                    <div>{getSuitSymbol(drawnCard.suit)}</div>
+               <div className={`absolute top-0 left-0 w-full h-full backface-hidden rounded-2xl bg-slate-100 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col justify-between p-5 select-none overflow-hidden ${drawnCard.rank === 'K' ? 'ring-4 ring-yellow-400 shadow-[0_0_50px_rgba(234,179,8,0.5)]' : ''}`}>
+                  
+                  {/* Paper Texture */}
+                  <div className="absolute inset-0 opacity-50 pointer-events-none" style={{ filter: 'contrast(120%) brightness(95%)' }}>
+                     {/* Simulating paper grain with noise/gradient could go here */}
                   </div>
 
-                  {/* Center Symbol */}
-                  <div className={`text-center text-8xl ${getCardColor(drawnCard.suit)}`}>
-                    {getSuitSymbol(drawnCard.suit)}
+                  {/* Decorative Inner Border */}
+                  <div className={`absolute inset-3 border-2 border-double ${getCardColor(drawnCard.suit)} opacity-30 rounded-lg pointer-events-none`}></div>
+
+                  {/* Top Corner */}
+                  <div className={`text-left text-5xl font-black leading-none z-10 ${getCardColor(drawnCard.suit)}`}>
+                    <div className="tracking-tighter">{drawnCard.rank}</div>
+                    <div className="text-3xl mt-1">{getSuitSymbol(drawnCard.suit)}</div>
+                  </div>
+
+                  {/* Center Watermark */}
+                  <div className={`absolute inset-0 flex items-center justify-center z-0 opacity-20 ${getCardColor(drawnCard.suit)}`}>
+                    <span className="text-[180px] leading-none transform scale-150">{getSuitSymbol(drawnCard.suit)}</span>
                   </div>
 
                   {/* Bottom Corner */}
-                  <div className={`text-right text-4xl font-bold leading-none ${getCardColor(drawnCard.suit)} transform rotate-180`}>
-                    <div>{drawnCard.rank}</div>
-                    <div>{getSuitSymbol(drawnCard.suit)}</div>
+                  <div className={`text-right text-5xl font-black leading-none z-10 ${getCardColor(drawnCard.suit)} transform rotate-180`}>
+                    <div className="tracking-tighter">{drawnCard.rank}</div>
+                    <div className="text-3xl mt-1">{getSuitSymbol(drawnCard.suit)}</div>
                   </div>
                </div>
-             )}
-             
-             {/* Empty State */}
-             {deck.length === 0 && drawnCard && (
-                 // Drawn card stays visible, but no back card behind it.
-                 <></>
              )}
           </div>
           
           {deck.length > 0 && !isFlipping && (
-             <div className="absolute -bottom-12 left-0 right-0 text-center text-gray-400 animate-bounce text-sm">
-                TAP TO DRAW
+             <div className="absolute -bottom-16 left-0 right-0 text-center">
+                <span className="text-gray-400 text-xs bg-white/10 px-3 py-1 rounded-full animate-bounce">TAP DECK TO DRAW</span>
              </div>
           )}
            {deck.length === 0 && (
-             <div className="absolute -bottom-12 left-0 right-0 text-center text-red-400 font-bold animate-pulse text-sm">
+             <div className="absolute -bottom-16 left-0 right-0 text-center text-red-400 font-bold animate-pulse text-sm">
                 DECK EMPTY - GAME OVER
              </div>
           )}
         </div>
 
-        {/* Rule Description */}
-        <div className="w-full min-h-[180px] bg-gray-800/80 border border-white/10 rounded-2xl p-6 text-center backdrop-blur-lg mt-4 flex flex-col items-center justify-center transition-all">
+        {/* Rule Description Panel */}
+        <div className={`w-full min-h-[180px] bg-gradient-to-b from-gray-800/90 to-gray-900/90 border border-white/10 rounded-3xl p-6 text-center backdrop-blur-xl mt-8 flex flex-col items-center justify-center transition-all duration-500 shadow-2xl transform ${drawnCard ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
            {drawnCard ? (
              <>
-                <div className="text-5xl mb-2">{RULES[drawnCard.rank].icon}</div>
-                <h3 className="text-2xl font-bold text-white mb-2 text-yellow-400">{RULES[drawnCard.rank].title}</h3>
-                <p className="text-gray-200 text-lg">{RULES[drawnCard.rank].desc}</p>
+                <div className="text-5xl mb-3 filter drop-shadow-md">{RULES[drawnCard.rank].icon}</div>
+                <h3 className={`text-2xl font-black mb-2 tracking-wide uppercase ${drawnCard.rank === 'K' ? 'text-yellow-400 animate-pulse' : 'text-white'}`}>
+                    {RULES[drawnCard.rank].title}
+                </h3>
+                <p className="text-gray-300 text-lg font-medium leading-relaxed">
+                    {RULES[drawnCard.rank].desc}
+                </p>
                 
                 {drawnCard.rank === 'K' && kingsCount === 4 && (
-                   <div className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg font-bold animate-pulse shadow-lg shadow-red-500/50">
-                      ☠️ KING ใบสุดท้าย! ดื่มกองกลาง! ☠️
+                   <div className="mt-4 w-full bg-red-600/90 text-white px-4 py-3 rounded-xl font-bold animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.6)] border border-red-400">
+                      👑 KING ใบสุดท้าย! <br/> <span className="text-sm font-normal text-red-100">ใครจับได้ ดื่มกองกลางหมดแก้ว!</span>
                    </div>
                 )}
              </>
            ) : (
-             <p className="text-gray-500">Jokers not included. Standard 52-card rules apply.</p>
+             <p className="text-gray-500 italic text-sm">Tap the deck to reveal your fate.</p>
            )}
         </div>
 
-        {/* Close Button */}
+        {/* Close Button (Improved) */}
         <button 
             onClick={onClose} 
-            className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white transition-colors"
+            className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-black/60 border border-white/10 hover:bg-white/20 text-gray-400 hover:text-white transition-all z-50 backdrop-blur-md shadow-lg active:scale-95"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
       </div>
@@ -205,6 +213,7 @@ const KingsCup: React.FC<KingsCupProps> = ({ onClose }) => {
         .preserve-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
+        .rotate-y-0 { transform: rotateY(0deg); }
       `}</style>
     </div>
   );

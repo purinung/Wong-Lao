@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, Player, CardType, GameContent, GameMode } from './types';
+import { GameState, Player, CardType, GameContent, GameMode, AppTheme } from './types';
 import PlayerSetup from './components/PlayerSetup';
 import Card from './components/Card';
 import SpinBottle from './components/SpinBottle';
@@ -8,6 +8,7 @@ import RussianRoulette from './components/RussianRoulette';
 import KingsCup from './components/KingsCup';
 import TimeBomb from './components/TimeBomb';
 import DiceGame from './components/DiceGame';
+import SettingsModal from './components/SettingsModal';
 import { TRUTH_SOFT, TRUTH_HARD, DARE_SOFT, DARE_HARD } from './data/gameContent';
 import { shuffleArray, processContent } from './utils/gameUtils';
 
@@ -28,10 +29,14 @@ const App: React.FC = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [gameMode, setGameMode] = useState<GameMode>('HARD');
+  const [theme, setTheme] = useState<AppTheme>('NORMAL');
   
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentContent, setCurrentContent] = useState<GameContent | null>(null);
+  
+  // Modals
+  const [showSettings, setShowSettings] = useState(false);
   const [showSpinBottle, setShowSpinBottle] = useState(false);
   const [showRoulette, setShowRoulette] = useState(false);
   const [showKingsCup, setShowKingsCup] = useState(false);
@@ -48,8 +53,6 @@ const App: React.FC = () => {
     setPlayers(playerList);
     setGameMode(mode);
     setGameState(GameState.PLAYING);
-    
-    // Initialize and Shuffle Decks
     initializeDecks();
   };
 
@@ -64,10 +67,8 @@ const App: React.FC = () => {
         DARE: shuffleArray(DARE_HARD)
       }
     });
-    console.log("Decks shuffled and initialized!");
   };
 
-  // Get current player object
   const currentPlayer = players[currentPlayerIndex];
 
   const handleDrawCard = async (type: CardType) => {
@@ -76,43 +77,32 @@ const App: React.FC = () => {
     setIsLoading(true);
     setIsFlipped(true);
 
-    // Simulate a brief "thinking" delay for effect (optional, but makes it feel less static)
     setTimeout(() => {
       drawCardFromDeck(type);
       setIsLoading(false);
-    }, 600);
+    }, 800); // Slightly longer delay for suspense
   };
 
   const drawCardFromDeck = (type: CardType) => {
-    // Clone the current decks to modify them
     const currentDecks = { ...decks };
     let targetDeck = currentDecks[gameMode][type];
 
-    // Check if deck is empty
     if (targetDeck.length === 0) {
-      console.log(`${gameMode} ${type} deck empty! Reshuffling...`);
-      // Reshuffle from source
       const source = 
         gameMode === 'SOFT' 
           ? (type === 'TRUTH' ? TRUTH_SOFT : DARE_SOFT)
           : (type === 'TRUTH' ? TRUTH_HARD : DARE_HARD);
-      
       targetDeck = shuffleArray(source);
     }
 
-    // Draw the card (pop from stack)
     const rawText = targetDeck.pop() || "Error: No card found";
-    
-    // Update state with the modified deck
     currentDecks[gameMode][type] = targetDeck;
     setDecks(currentDecks);
 
-    // Process the text (replace placeholders)
     const finalDescription = processContent(rawText, players, currentPlayerIndex);
 
-    // Determine Title and Penalty based on mode/type
     let title = "";
-    let penalty = "หมดแก้ว!"; // Default
+    let penalty = "หมดแก้ว!"; 
 
     if (type === 'TRUTH') {
       title = gameMode === 'SOFT' ? "ความจริงที่น่ารัก" : "ความจริงที่เจ็บปวด";
@@ -135,13 +125,12 @@ const App: React.FC = () => {
     setTimeout(() => {
       setCurrentContent(null);
       setCurrentPlayerIndex((prev) => (prev + 1) % players.length);
-    }, 600); // Wait for flip back animation
+    }, 600); 
   };
 
   const handleSpinBottleResult = (index: number) => {
     setCurrentPlayerIndex(index);
     setShowSpinBottle(false);
-    // If there was a card showing, reset it
     setIsFlipped(false);
     setTimeout(() => {
       setCurrentContent(null);
@@ -161,63 +150,83 @@ const App: React.FC = () => {
     setShowDiceGame(false);
   };
 
+  // --- Dynamic Styles based on Theme ---
+  const getBackgroundClass = () => {
+    switch(theme) {
+      case 'LIGHT': return 'bg-gray-100';
+      case 'DARK': return 'bg-[#000000]';
+      default: return 'bg-[#050505]'; // Normal
+    }
+  };
+
+  const getTextColor = (defaultColor: string = 'text-white') => {
+    return theme === 'LIGHT' ? 'text-gray-900' : defaultColor;
+  };
+
+  const getSubTextColor = () => {
+    return theme === 'LIGHT' ? 'text-gray-500' : 'text-gray-400';
+  };
+
+  const getGlassClass = () => {
+    return theme === 'LIGHT' 
+      ? 'bg-white/60 border-gray-300 shadow-sm' 
+      : 'bg-white/5 border-white/5';
+  };
+
   return (
-    // Use min-h-[100dvh] to properly handle mobile browser address bars
-    <div className="min-h-[100dvh] bg-black text-white overflow-hidden relative selection:bg-purple-500 selection:text-white font-sans">
-      {/* Background Ambience */}
-      <div className={`fixed inset-0 pointer-events-none transition-colors duration-1000 ${
-        gameMode === 'SOFT' 
-        ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-900/40 via-gray-900 to-black' 
-        : 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/40 via-gray-900 to-black'
-      }`}></div>
+    <div className={`min-h-[100dvh] ${getBackgroundClass()} transition-colors duration-500 text-white overflow-hidden relative font-sans selection:bg-blue-500/30 selection:text-blue-200`}>
       
-      <div className={`fixed top-0 left-0 w-full h-1 bg-gradient-to-r shadow-[0_0_20px_rgba(255,255,255,0.5)] ${
-        gameMode === 'SOFT' 
-        ? 'from-pink-400 via-purple-400 to-indigo-400 shadow-pink-500/50'
-        : 'from-red-500 via-orange-500 to-yellow-500 shadow-red-500/50'
-      }`}></div>
+      {/* Atmospheric Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          
+          {theme === 'NORMAL' && (
+            <>
+              {/* Dark Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black opacity-80 z-0"></div>
+              {/* Animated Blobs */}
+              <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-[120px] animate-float z-0"></div>
+              <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-900/20 rounded-full blur-[120px] animate-float-delayed z-0"></div>
+              {gameMode === 'HARD' && (
+                <div className="absolute top-[40%] left-[30%] w-[400px] h-[400px] bg-red-900/10 rounded-full blur-[100px] animate-pulse-fast z-0"></div>
+              )}
+            </>
+          )}
 
-      {/* Spin Bottle Overlay */}
-      {showSpinBottle && (
-        <SpinBottle 
-            players={players} 
-            onClose={() => setShowSpinBottle(false)}
-            onPlayerSelected={handleSpinBottleResult}
-        />
-      )}
+          {theme === 'LIGHT' && (
+             <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 z-0"></div>
+          )}
+          
+          {/* DARK mode has no extra blobs, just pure bg color set in parent */}
+      </div>
 
-      {/* Russian Roulette Overlay */}
-      {showRoulette && (
-        <RussianRoulette 
-          onClose={() => setShowRoulette(false)}
-        />
-      )}
+      {/* Overlays */}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} currentTheme={theme} onThemeChange={setTheme} />}
+      {showSpinBottle && <SpinBottle players={players} onClose={() => setShowSpinBottle(false)} onPlayerSelected={handleSpinBottleResult} />}
+      {showRoulette && <RussianRoulette onClose={() => setShowRoulette(false)} />}
+      {showKingsCup && <KingsCup onClose={() => setShowKingsCup(false)} />}
+      {showTimeBomb && <TimeBomb onClose={() => setShowTimeBomb(false)} />}
+      {showDiceGame && <DiceGame onClose={() => setShowDiceGame(false)} />}
 
-      {/* King's Cup Overlay */}
-      {showKingsCup && (
-        <KingsCup 
-          onClose={() => setShowKingsCup(false)}
-        />
-      )}
-
-       {/* Time Bomb Overlay */}
-       {showTimeBomb && (
-        <TimeBomb 
-          onClose={() => setShowTimeBomb(false)}
-        />
-      )}
-
-      {/* Dice Game Overlay */}
-      {showDiceGame && (
-        <DiceGame 
-          onClose={() => setShowDiceGame(false)}
-        />
-      )}
-
-      <div className="relative z-10 container mx-auto px-4 py-8 min-h-[100dvh] flex flex-col">
+      <div className="relative z-10 container mx-auto px-4 py-6 min-h-[100dvh] flex flex-col">
         
+        {/* Settings Gear Button - Always Visible */}
+        <div className="absolute top-6 right-4 z-20">
+          <button 
+            onClick={() => setShowSettings(true)}
+            className={`p-2 rounded-full transition-all ${theme === 'LIGHT' ? 'text-gray-600 hover:bg-gray-200' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.212 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
+
         {gameState === GameState.SETUP && (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center pt-12">
+            {/* Pass minimal visual props if needed, or rely on component internal styles. 
+                PlayerSetup is quite complex visually, so we let it keep its "Card" look, 
+                but it will sit on the dynamic background. */}
             <PlayerSetup 
               onStartGame={handleStartGame} 
               onStartRoulette={() => setShowRoulette(true)}
@@ -229,80 +238,50 @@ const App: React.FC = () => {
         )}
 
         {gameState === GameState.PLAYING && (
-          <div className="flex-1 flex flex-col max-w-lg mx-auto w-full justify-between">
+          <div className="flex-1 flex flex-col max-w-md mx-auto w-full justify-between pt-4">
             
-            {/* Header / Turn Indicator */}
-            <div className="flex justify-between items-start mb-4 relative">
-               <div className="flex space-x-2">
-                 <button 
-                   onClick={handleResetGame}
-                   className="text-xs text-gray-500 hover:text-white transition-colors px-3 py-1.5 border border-gray-800 rounded-lg bg-gray-900 hover:border-gray-600"
-                 >
-                   Quit
-                 </button>
-                 {/* Spin Bottle Trigger */}
-                 <button 
-                    onClick={() => setShowSpinBottle(true)}
-                    className="text-xl bg-gray-800 border border-green-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(34,197,94,0.2)]"
-                    title="Spin the Bottle"
-                 >
-                    🍾
-                 </button>
-                 {/* Russian Roulette Trigger */}
-                 <button 
-                    onClick={() => setShowRoulette(true)}
-                    className="text-xl bg-gray-800 border border-red-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(239,68,68,0.2)]"
-                    title="Russian Roulette"
-                 >
-                    🔫
-                 </button>
-                 {/* King's Cup Trigger */}
-                 <button 
-                    onClick={() => setShowKingsCup(true)}
-                    className="text-xl bg-gray-800 border border-yellow-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(234,179,8,0.2)]"
-                    title="King's Cup"
-                 >
-                    👑
-                 </button>
-                 {/* Time Bomb Trigger */}
-                 <button 
-                    onClick={() => setShowTimeBomb(true)}
-                    className="text-xl bg-gray-800 border border-orange-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(234,88,12,0.2)]"
-                    title="Time Bomb"
-                 >
-                    💣
-                 </button>
-                 {/* Dice Game Trigger */}
-                 <button 
-                    onClick={() => setShowDiceGame(true)}
-                    className="text-xl bg-gray-800 border border-blue-500/30 rounded-lg px-3 py-1 hover:bg-gray-700 transition-colors shadow-[0_0_10px_rgba(59,130,246,0.2)]"
-                    title="Dice"
-                 >
-                    🎲
-                 </button>
-               </div>
-
-               <div className="text-center flex-1 absolute left-0 right-0 pointer-events-none">
-                  <div className="inline-flex items-center space-x-2 mb-1">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border backdrop-blur-sm ${
-                      gameMode === 'SOFT' 
-                      ? 'border-pink-500/50 text-pink-400 bg-pink-500/10' 
-                      : 'border-red-500/50 text-red-400 bg-red-500/10'
-                    }`}>
-                      MODE: {gameMode}
-                    </span>
-                  </div>
-                  <h2 className="text-3xl font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] mt-1">
-                    {currentPlayer?.name}
-                  </h2>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em]">YOUR TURN</p>
-               </div>
+            {/* Top Bar */}
+            <div className={`flex justify-between items-center mb-2 backdrop-blur-sm p-2 rounded-xl border ${getGlassClass()}`}>
+               <button 
+                 onClick={handleResetGame}
+                 className={`text-[10px] transition-colors px-3 py-1.5 border rounded-lg ${theme === 'LIGHT' ? 'text-gray-600 border-gray-300 hover:bg-gray-200' : 'text-gray-500 hover:text-white border-white/5 hover:bg-white/5'}`}
+               >
+                 EXIT
+               </button>
                
-               {/* Spacer to balance layout */}
-               <div className="w-[40px]"></div>
+               <div className="flex space-x-1">
+                 {[
+                    {icon: '🍾', action: () => setShowSpinBottle(true)},
+                    {icon: '🔫', action: () => setShowRoulette(true)},
+                    {icon: '👑', action: () => setShowKingsCup(true)},
+                    {icon: '💣', action: () => setShowTimeBomb(true)},
+                    {icon: '🎲', action: () => setShowDiceGame(true)},
+                 ].map((btn, idx) => (
+                    <button 
+                        key={idx}
+                        onClick={btn.action}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors text-sm border ${theme === 'LIGHT' ? 'bg-gray-200 hover:bg-gray-300 text-black border-transparent' : 'bg-white/5 hover:bg-white/10 text-white border-white/5'}`}
+                    >
+                        {btn.icon}
+                    </button>
+                 ))}
+               </div>
             </div>
 
-            {/* The Card Area - Centered vertically in available space */}
+            {/* Player Info */}
+            <div className="text-center mb-2">
+                <div className="inline-block relative">
+                   <span className={`absolute inset-0 blur-lg opacity-20 rounded-full ${theme === 'LIGHT' ? 'bg-blue-600' : 'bg-blue-500'}`}></span>
+                   <h2 className={`relative text-3xl font-black tracking-tight drop-shadow-lg ${getTextColor()}`}>
+                     {currentPlayer?.name}
+                   </h2>
+                </div>
+                <p className={`text-[10px] font-bold uppercase tracking-[0.3em] mt-1 animate-pulse ${theme === 'LIGHT' ? 'text-blue-600' : 'text-blue-400'}`}>
+                  IT'S YOUR TURN
+                </p>
+            </div>
+
+            {/* The Card Area */}
             <div className="flex-1 flex items-center justify-center perspective-container my-2">
               <Card 
                 content={currentContent} 
@@ -311,21 +290,21 @@ const App: React.FC = () => {
               />
             </div>
 
-            {/* Controls */}
-            <div className="mt-auto pb-4 space-y-4">
+            {/* Bottom Controls */}
+            <div className="mt-auto pb-6 space-y-4">
               {!isFlipped ? (
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => handleDrawCard('TRUTH')}
                     disabled={isFlipped}
-                    className="group relative overflow-hidden rounded-xl bg-gray-800 p-6 border border-blue-500/30 hover:border-blue-400 transition-all active:scale-95"
+                    className={`group relative overflow-hidden rounded-2xl p-6 border transition-all active:scale-95 shadow-lg ${theme === 'LIGHT' ? 'bg-white border-blue-200 shadow-blue-100' : 'bg-[#0a0a0a] border-blue-900/30 shadow-blue-900/10'}`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className={`absolute inset-0 transition-colors ${theme === 'LIGHT' ? 'bg-blue-50 group-hover:bg-blue-100' : 'bg-blue-600/5 group-hover:bg-blue-600/10'}`}></div>
                     <div className="relative z-10 flex flex-col items-center">
-                      <span className="text-3xl mb-2">🤫</span>
-                      <span className="text-xl font-bold text-blue-400 tracking-widest">TRUTH</span>
-                      <span className="text-[10px] text-gray-500 mt-1">
-                        {decks[gameMode].TRUTH.length} cards left
+                      <span className="text-4xl mb-2 filter drop-shadow-[0_0_10px_rgba(59,130,246,0.6)]">🤫</span>
+                      <span className="text-xl font-black text-blue-500 tracking-widest group-hover:text-blue-400 transition-colors">TRUTH</span>
+                      <span className={`text-[9px] mt-1 uppercase tracking-wider ${getSubTextColor()}`}>
+                        Reveal Secrets
                       </span>
                     </div>
                   </button>
@@ -333,41 +312,36 @@ const App: React.FC = () => {
                   <button
                     onClick={() => handleDrawCard('DARE')}
                     disabled={isFlipped}
-                    className="group relative overflow-hidden rounded-xl bg-gray-800 p-6 border border-red-500/30 hover:border-red-400 transition-all active:scale-95"
+                    className={`group relative overflow-hidden rounded-2xl p-6 border transition-all active:scale-95 shadow-lg ${theme === 'LIGHT' ? 'bg-white border-red-200 shadow-red-100' : 'bg-[#0a0a0a] border-red-900/30 shadow-red-900/10'}`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                     <div className={`absolute inset-0 transition-colors ${theme === 'LIGHT' ? 'bg-red-50 group-hover:bg-red-100' : 'bg-red-600/5 group-hover:bg-red-600/10'}`}></div>
                     <div className="relative z-10 flex flex-col items-center">
-                      <span className="text-3xl mb-2">🔥</span>
-                      <span className="text-xl font-bold text-red-400 tracking-widest">DARE</span>
-                      <span className="text-[10px] text-gray-500 mt-1">
-                        {decks[gameMode].DARE.length} cards left
+                      <span className="text-4xl mb-2 filter drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]">🔥</span>
+                      <span className="text-xl font-black text-red-500 tracking-widest group-hover:text-red-400 transition-colors">DARE</span>
+                      <span className={`text-[9px] mt-1 uppercase tracking-wider ${getSubTextColor()}`}>
+                        Take Risks
                       </span>
                     </div>
                   </button>
                 </div>
               ) : (
-                <div className="flex justify-center">
+                <div className="flex justify-center px-8">
                   <button
                     onClick={handleNextTurn}
                     disabled={isLoading}
-                    className={`w-full max-w-xs font-bold py-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all transform active:scale-95 text-white ${
-                      gameMode === 'SOFT'
-                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-400 hover:to-purple-400 shadow-pink-500/20'
-                      : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 shadow-green-500/20'
-                    }`}
+                    className={`w-full max-w-sm font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-3 transition-all transform active:scale-95 ${theme === 'LIGHT' ? 'bg-gray-900 text-white hover:bg-gray-800' : 'text-white bg-gradient-to-r from-gray-800 to-gray-900 border border-white/10 hover:border-white/20'}`}
                   >
-                    <span>Next Player</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                    <span className="uppercase tracking-widest text-sm">Next Player</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                     </svg>
                   </button>
                 </div>
               )}
               
-               {/* Footer Info */}
-               <div className="text-center">
-                  <p className="text-gray-600 text-xs">
-                    Player {currentPlayerIndex + 1} of {players.length}
+               <div className={`text-center ${theme === 'LIGHT' ? 'opacity-50 text-black' : 'opacity-30 text-white'}`}>
+                  <p className="text-[9px] uppercase tracking-widest">
+                    Round {Math.floor(currentPlayerIndex / players.length) + 1}
                   </p>
                </div>
             </div>
@@ -375,22 +349,6 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-      
-      {/* Custom CSS for 3D Rotation utilities */}
-      <style>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
     </div>
   );
 };

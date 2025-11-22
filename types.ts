@@ -1,5 +1,7 @@
+
 export type CardType = 'TRUTH' | 'DARE';
 export type GameMode = 'SOFT' | 'HARD';
+export type AppTheme = 'NORMAL' | 'DARK' | 'LIGHT';
 
 export interface GameContent {
   type: CardType;

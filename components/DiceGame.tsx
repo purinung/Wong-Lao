@@ -13,10 +13,6 @@ const DiceGame: React.FC<DiceGameProps> = ({ onClose }) => {
   const [subMessage, setSubMessage] = useState("");
   const [resultColor, setResultColor] = useState("text-gray-400");
 
-  // Random initial rotation for visual flair
-  const [rotation1, setRotation1] = useState({ x: 0, y: 0 });
-  const [rotation2, setRotation2] = useState({ x: 0, y: 0 });
-
   const rollDice = () => {
     if (isRolling) return;
     setIsRolling(true);
@@ -24,30 +20,17 @@ const DiceGame: React.FC<DiceGameProps> = ({ onClose }) => {
     setSubMessage("");
     setResultColor("text-yellow-400");
 
-    // Animation: Spin frantically
-    const spinInterval = setInterval(() => {
-        setDice1(Math.ceil(Math.random() * 6));
-        setDice2(Math.ceil(Math.random() * 6));
-        setRotation1({ x: Math.random() * 720, y: Math.random() * 720 });
-        setRotation2({ x: Math.random() * 720, y: Math.random() * 720 });
-    }, 100);
-
+    // Rolling duration
     setTimeout(() => {
-      clearInterval(spinInterval);
-      
       const newD1 = Math.ceil(Math.random() * 6);
       const newD2 = Math.ceil(Math.random() * 6);
       
       setDice1(newD1);
       setDice2(newD2);
       
-      // Reset rotation to flat faces for readability
-      setRotation1({ x: 0, y: 0 });
-      setRotation2({ x: 0, y: 0 });
-      
       calculateResult(newD1, newD2);
       setIsRolling(false);
-    }, 1500);
+    }, 1500); // 1.5s roll time
   };
 
   const calculateResult = (d1: number, d2: number) => {
@@ -85,11 +68,9 @@ const DiceGame: React.FC<DiceGameProps> = ({ onClose }) => {
     }
   };
 
-  // Helper to render dots on dice face
-  const renderDots = (num: number) => {
+  // Helper to render dots for a specific face number
+  const FaceContent = ({ num }: { num: number }) => {
     const dots = [];
-    // Positioning logic for flex/grid dots
-    // Simple approach: 9 grid cells
     const positions = {
         1: [4],
         2: [0, 8],
@@ -102,23 +83,55 @@ const DiceGame: React.FC<DiceGameProps> = ({ onClose }) => {
 
     for (let i = 0; i < 9; i++) {
         dots.push(
-            <div key={i} className={`w-2 h-2 rounded-full ${activeDots.includes(i) ? (num === 1 ? 'bg-red-500' : 'bg-black') : 'bg-transparent'}`}></div>
+            <div key={i} className={`w-2.5 h-2.5 rounded-full ${activeDots.includes(i) ? (num === 1 ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]' : 'bg-black') : 'bg-transparent'}`}></div>
         );
     }
     return <div className="grid grid-cols-3 gap-1 p-2 w-full h-full">{dots}</div>;
   };
 
-  const Die = ({ val, rot }: { val: number, rot: {x: number, y: number} }) => (
-    <div className="w-24 h-24 relative preserve-3d transition-all duration-500 ease-out" 
-         style={{ transform: isRolling ? `rotateX(${rot.x}deg) rotateY(${rot.y}deg)` : 'rotateX(0) rotateY(0)' }}>
-        {/* Front */}
-        <div className="absolute inset-0 bg-white rounded-xl border-2 border-gray-300 flex items-center justify-center backface-hidden shadow-inner">
-             {renderDots(val)}
-        </div>
-        {/* Pseudo-3D sides (Visual trickery since we reset rotation to 0) */}
-        <div className="absolute inset-0 bg-gray-200 rounded-xl transform translate-z-[-10px] scale-90 opacity-50"></div>
-    </div>
+  // A Single Face of the cube
+  const DieFace = ({ num, transform }: { num: number, transform: string }) => (
+      <div className="absolute w-full h-full bg-gray-100 border-2 border-gray-300 rounded-xl flex items-center justify-center backface-visible shadow-[inset_0_0_15px_rgba(0,0,0,0.1)]"
+           style={{ transform }}>
+          <FaceContent num={num} />
+      </div>
   );
+
+  // The 3D Die Component
+  const Die = ({ val, isRolling, delay = 0 }: { val: number, isRolling: boolean, delay?: number }) => {
+    // Mapping numbers to 3D rotations to bring that face to front
+    // Standard Dice Orientation assumed:
+    // 1 Front, 6 Back, 2 Right, 5 Left, 3 Top, 4 Bottom
+    const getEndRotation = (n: number) => {
+        switch(n) {
+            case 1: return 'rotateX(0deg) rotateY(0deg)';
+            case 6: return 'rotateX(180deg) rotateY(0deg)';
+            case 2: return 'rotateX(0deg) rotateY(-90deg)';
+            case 5: return 'rotateX(0deg) rotateY(90deg)';
+            case 3: return 'rotateX(-90deg) rotateY(0deg)';
+            case 4: return 'rotateX(90deg) rotateY(0deg)';
+            default: return 'rotateX(0deg) rotateY(0deg)';
+        }
+    };
+
+    return (
+        <div className="w-24 h-24 relative perspective-container" style={{ perspective: '800px' }}>
+             <div className={`w-full h-full relative preserve-3d transition-transform duration-[1000ms] ease-out ${isRolling ? 'animate-tumble' : ''}`}
+                  style={{ 
+                      transform: isRolling ? '' : getEndRotation(val),
+                      animationDelay: isRolling ? `${delay}ms` : '0ms'
+                  }}>
+                 {/* The 6 Faces of a Cube (Size 96px -> TranslateZ 48px) */}
+                 <DieFace num={1} transform="translateZ(48px)" />
+                 <DieFace num={6} transform="rotateY(180deg) translateZ(48px)" />
+                 <DieFace num={2} transform="rotateY(90deg) translateZ(48px)" />
+                 <DieFace num={5} transform="rotateY(-90deg) translateZ(48px)" />
+                 <DieFace num={3} transform="rotateX(90deg) translateZ(48px)" />
+                 <DieFace num={4} transform="rotateX(-90deg) translateZ(48px)" />
+             </div>
+        </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md animate-fade-in">
@@ -133,18 +146,18 @@ const DiceGame: React.FC<DiceGameProps> = ({ onClose }) => {
         </div>
 
         {/* Dice Area */}
-        <div className="flex-1 flex flex-col items-center justify-center w-full perspective-1000">
-            <div className="flex space-x-8 mb-12">
-                <Die val={dice1} rot={rotation1} />
-                <Die val={dice2} rot={rotation2} />
+        <div className="flex-1 flex flex-col items-center justify-center w-full">
+            <div className="flex space-x-12 mb-12">
+                <Die val={dice1} isRolling={isRolling} />
+                <Die val={dice2} isRolling={isRolling} delay={100} />
             </div>
 
             {/* Result Display */}
-            <div className={`text-center transition-all duration-300 ${isRolling ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
+            <div className={`text-center transition-all duration-500 ${isRolling ? 'opacity-0 scale-90' : 'opacity-100 scale-100'}`}>
                 <h3 className={`text-3xl font-black uppercase mb-2 drop-shadow-md ${resultColor}`}>
                     {resultMessage}
                 </h3>
-                <p className="text-white text-xl font-medium bg-white/10 px-6 py-3 rounded-full backdrop-blur border border-white/10">
+                <p className="text-white text-xl font-medium bg-white/10 px-6 py-3 rounded-full backdrop-blur border border-white/10 inline-block">
                     {subMessage || "..."}
                 </p>
             </div>
@@ -155,9 +168,11 @@ const DiceGame: React.FC<DiceGameProps> = ({ onClose }) => {
              <button 
                 onClick={rollDice}
                 disabled={isRolling}
-                className="w-full py-6 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-2xl rounded-2xl shadow-[0_4px_0_rgb(30,58,138)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full py-6 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-2xl rounded-2xl shadow-[0_4px_0_rgb(30,58,138)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-70 disabled:cursor-not-allowed group"
              >
-                {isRolling ? 'Rolling...' : 'ROLL DICE 🎲'}
+                <span className={isRolling ? 'animate-pulse' : 'group-hover:scale-110 inline-block transition-transform'}>
+                    {isRolling ? 'Rolling...' : 'ROLL DICE 🎲'}
+                </span>
              </button>
         </div>
 
@@ -173,9 +188,19 @@ const DiceGame: React.FC<DiceGameProps> = ({ onClose }) => {
 
       </div>
       <style>{`
-        .perspective-1000 { perspective: 1000px; }
         .preserve-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
+        .backface-visible { backface-visibility: visible; } /* Visible so we can see sides while rotating */
+        
+        @keyframes tumble {
+          0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+          25% { transform: rotateX(180deg) rotateY(90deg) rotateZ(45deg); }
+          50% { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg); }
+          75% { transform: rotateX(540deg) rotateY(270deg) rotateZ(135deg); }
+          100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(180deg); }
+        }
+        .animate-tumble {
+          animation: tumble 0.6s linear infinite;
+        }
       `}</style>
     </div>
   );
